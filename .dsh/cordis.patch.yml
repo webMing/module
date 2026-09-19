@@ -1,0 +1,32 @@
+# 项目级 DSH 插件补丁覆盖（overlay）
+#
+# 用途：把 Dart/Flutter MCP server 作为 DSH 工具接进来。
+#
+# 生效方式：
+#   1) 启动时叠加（不改全局配置）：dsh web --patch .dsh/cordis.patch.yml
+#   2) 长期生效：把下面的 `- insert:` 条目合并进 ~/.dsh/profiles/web/cordis.patch.yml
+#      （或 ~/.dsh/cordis.patch.yml，home 级 patch 在 profile patch 之后应用）
+#
+# 注意：
+#   - serverName 决定工具命名空间，工具名形如 mcp__dart__analyze_files。
+#   - command 必须是可直接执行的 dart 路径。本机 dart/flutter 不在 PATH，
+#     故写 SDK 内置的绝对路径（顺带避开 Flutter 包装脚本写 bin/cache 的问题）。
+#     若你的 shell PATH 已有 dart，可简化为 command: dart
+#   - 不要加 PUB_CACHE 环境变量：默认 ~/.pub-cache 是可写的，
+#     MCP server 启动时会在其中维护 active_roots。仅当运行环境禁止写该目录时，
+#     才需要把 PUB_CACHE 指向别处（见 docs/ai-tooling 的说明）。
+#   - 首次启动需联网下载 dart_mcp_server；已在正常 shell 成功执行过一次
+#     `dart mcp-server --help` 后，bundle 已装好，后续启动免下载。
+
+- insert:
+    - id: mcp-dart
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: dart
+        transport: stdio
+        command: /Users/stephanie/Downloads/flutter_3.47.4/bin/cache/dart-sdk/bin/dart
+        args:
+          - mcp-server
+        toolCallTimeoutMs: 60000
+        reconnect:
+          enabled: true
