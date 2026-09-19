@@ -1,0 +1,21 @@
+name: ui_kit
+description: "共享设计系统：颜色、间距、字体令牌与通用 iOS 风格组件。"
+version: 0.0.1
+
+environment:
+  sdk: ^3.13.3
+  flutter: ">=1.17.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:

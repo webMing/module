@@ -24,6 +24,7 @@ environment:
 workspace:
   - packages/home
   - packages/login
+  - packages/ui_kit
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -38,6 +39,11 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+
+  # 本地工作区子包（Pub Workspace 内用版本约束声明，不用 path:）
+  login: ^0.0.1
+  home: ^0.0.1
+  ui_kit: ^0.0.1
   go_router: ^18.0.1
   signals: ^7.1.0
   get_it: ^9.2.1
