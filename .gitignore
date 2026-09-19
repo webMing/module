@@ -30,8 +30,11 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
-/coverage/
+# 不加前导斜杠：匹配任意层级的 build/，覆盖 packages/*/build/
+# （packages/home、packages/login 由 flutter create 生成了各自的 .gitignore，
+#   手工创建的 packages/ui_kit 没有，曾导致构建产物被误纳入版本控制）
+build/
+coverage/
 
 # Symbolication related
 app.*.symbols
