@@ -5,10 +5,7 @@ import 'package:dio/dio.dart';
 ///
 /// 归一化的意义：上层模块只需要认识 [AppException] 一个体系，
 /// 将来把 Dio 换成别的客户端时，feature 代码零改动。
-NetworkException mapDioException(
-  DioException error, {
-  StackTrace? stackTrace,
-}) {
+NetworkException mapDioException(DioException error, {StackTrace? stackTrace}) {
   final options = error.requestOptions;
   final statusCode = error.response?.statusCode;
   final kind = _kindOf(error, statusCode);
@@ -42,11 +39,9 @@ NetworkErrorKind _kindOf(DioException error, int? statusCode) =>
       DioExceptionType.sendTimeout ||
       DioExceptionType.receiveTimeout ||
       // dio 5.11 新增：响应体转换阶段超时，语义上仍是超时。
-      DioExceptionType.transformTimeout =>
-        NetworkErrorKind.timeout,
+      DioExceptionType.transformTimeout => NetworkErrorKind.timeout,
       DioExceptionType.connectionError ||
-      DioExceptionType.badCertificate =>
-        NetworkErrorKind.noConnection,
+      DioExceptionType.badCertificate => NetworkErrorKind.noConnection,
       DioExceptionType.cancel => NetworkErrorKind.cancelled,
       DioExceptionType.badResponse => NetworkErrorKind.badResponse,
       // unknown 且拿不到响应，多半是底层 socket / 解析异常。

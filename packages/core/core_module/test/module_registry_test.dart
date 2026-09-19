@@ -81,10 +81,7 @@ void main() {
 
       expect(registry.find<_FakeModule>(), same(module));
       expect(registry.find<AppModule>(), same(module));
-      expect(
-        registry.find<_OtherModule>(),
-        isNull,
-      );
+      expect(registry.find<_OtherModule>(), isNull);
     });
 
     test('contains / descriptors / modules', () {
@@ -94,10 +91,7 @@ void main() {
 
       expect(registry.contains('a'), isTrue);
       expect(registry.contains('z'), isFalse);
-      expect(
-        registry.descriptors.map((d) => d.id),
-        <String>['a', 'b'],
-      );
+      expect(registry.descriptors.map((d) => d.id), <String>['a', 'b']);
       expect(registry.modules.length, 2);
       expect(registry.isBooted, isFalse);
     });
@@ -122,10 +116,7 @@ void main() {
         ..register(_FakeModule(const ModuleDescriptor(id: 'a', version: '1')))
         ..boot(ServiceLocator());
 
-      expect(
-        () => registry.boot(ServiceLocator()),
-        throwsA(isA<StateError>()),
-      );
+      expect(() => registry.boot(ServiceLocator()), throwsA(isA<StateError>()));
     });
 
     test('boot 之前取不到协议', () {
@@ -168,7 +159,9 @@ void main() {
 
     test('requires 满足时正常 boot', () {
       final registry = ModuleRegistry()
-        ..register(_FakeModule(const ModuleDescriptor(id: 'product', version: '1')))
+        ..register(
+          _FakeModule(const ModuleDescriptor(id: 'product', version: '1')),
+        )
         ..register(
           _FakeModule(
             const ModuleDescriptor(
@@ -295,7 +288,9 @@ void main() {
           _FakeModule(
             const ModuleDescriptor(id: 'deps', version: '1'),
             onRegister: (registrar) => registrar
-              ..onBoot((locator) => order.add('boot:${locator.get<_Repo>().name}'))
+              ..onBoot(
+                (locator) => order.add('boot:${locator.get<_Repo>().name}'),
+              )
               ..singleton<_Factory>((_) {
                 order.add('dependency');
                 return _Factory();

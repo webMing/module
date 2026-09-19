@@ -100,11 +100,9 @@ void main() {
       final dispose = store.session.subscribe(seen.add);
       dispose();
 
-      expect(
-        seen,
-        <AuthSession?>[null],
-        reason: 'signals 7 的 subscribe 会立即回调当前值，而非等待首次变更',
-      );
+      expect(seen, <AuthSession?>[
+        null,
+      ], reason: 'signals 7 的 subscribe 会立即回调当前值，而非等待首次变更');
       store.dispose();
     });
 
@@ -174,8 +172,7 @@ void main() {
 
     test('clear 会删除已持久化的会话', () async {
       final backing = InMemoryKeyValueStore();
-      final store = SessionStore(storage: backing)
-        ..set(buildSession());
+      final store = SessionStore(storage: backing)..set(buildSession());
       await store.flush();
       expect(await backing.containsKey('auth.session'), isTrue);
 

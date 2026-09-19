@@ -97,10 +97,7 @@ class Observability {
 
     await analytics.track(
       'app_error',
-      properties: <String, Object?>{
-        'message': error.message,
-        ...fields,
-      },
+      properties: <String, Object?>{'message': error.message, ...fields},
     );
   }
 }

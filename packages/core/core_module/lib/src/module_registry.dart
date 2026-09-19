@@ -48,7 +48,8 @@ class ModuleRegistry {
   bool contains(String id) => _modules.containsKey(id);
 
   /// 已注册的模块。
-  Iterable<AppModule> get modules => List<AppModule>.unmodifiable(_modules.values);
+  Iterable<AppModule> get modules =>
+      List<AppModule>.unmodifiable(_modules.values);
 
   /// 已注册的模块身份。
   Iterable<ModuleDescriptor> get descriptors =>
@@ -81,9 +82,7 @@ class ModuleRegistry {
     for (final module in _modules.values) {
       for (final required in module.descriptor.requires) {
         if (!_modules.containsKey(required)) {
-          throw StateError(
-            '模块 ${module.descriptor.id} 依赖未注册的模块：$required',
-          );
+          throw StateError('模块 ${module.descriptor.id} 依赖未注册的模块：$required');
         }
       }
     }
@@ -94,9 +93,7 @@ class ModuleRegistry {
       entry.value.protocols.forEach((scheme, protocol) {
         final owner = _protocolOwner[scheme];
         if (owner != null) {
-          throw StateError(
-            '协议 scheme 冲突：$scheme 同时被 $owner 与 $moduleId 注册',
-          );
+          throw StateError('协议 scheme 冲突：$scheme 同时被 $owner 与 $moduleId 注册');
         }
         _protocolOwner[scheme] = moduleId;
         _protocols[scheme] = protocol;

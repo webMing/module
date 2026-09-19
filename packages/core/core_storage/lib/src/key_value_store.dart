@@ -30,9 +30,6 @@ abstract interface class KeyValueStore {
 /// 空键往往意味着上游拼错了 key，静默写入会造成难以排查的脏数据。
 void ensureValidKey(String key) {
   if (key.trim().isEmpty) {
-    throw const StorageException(
-      '存储键不能为空',
-      code: 'storage.empty_key',
-    );
+    throw const StorageException('存储键不能为空', code: 'storage.empty_key');
   }
 }

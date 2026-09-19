@@ -143,7 +143,9 @@ void main() {
 
   group('ApiClient', () {
     test('getMap 返回解码后的对象', () async {
-      final adapter = _FakeAdapter((_) async => _jsonBody(<String, Object?>{'id': 1}));
+      final adapter = _FakeAdapter(
+        (_) async => _jsonBody(<String, Object?>{'id': 1}),
+      );
       final client = NetworkFactory.createClient(
         config: _config,
         adapter: adapter,
@@ -169,19 +171,23 @@ void main() {
     });
 
     test('postMap 发送请求体', () async {
-      final adapter = _FakeAdapter((_) async => _jsonBody(<String, Object?>{'ok': true}));
+      final adapter = _FakeAdapter(
+        (_) async => _jsonBody(<String, Object?>{'ok': true}),
+      );
       final client = NetworkFactory.createClient(
         config: _config,
         adapter: adapter,
       );
 
-      await client.postMap('/login', body: <String, Object?>{'account': 'demo'});
+      await client.postMap(
+        '/login',
+        body: <String, Object?>{'account': 'demo'},
+      );
       final request = adapter.requests.single;
       expect(request.method, 'POST');
-      expect(
-        jsonDecode(jsonEncode(request.data)),
-        <String, Object?>{'account': 'demo'},
-      );
+      expect(jsonDecode(jsonEncode(request.data)), <String, Object?>{
+        'account': 'demo',
+      });
     });
 
     test('响应结构不符时抛 badPayload', () async {
@@ -231,7 +237,10 @@ void main() {
         adapter: adapter,
       );
 
-      await expectLater(client.getMap('/ping'), throwsA(isA<NetworkException>()));
+      await expectLater(
+        client.getMap('/ping'),
+        throwsA(isA<NetworkException>()),
+      );
 
       final record = logger.records.single;
       expect(record.level, LogLevel.warn);
@@ -259,7 +268,9 @@ void main() {
 
     test('无令牌或空令牌时不附加头', () async {
       for (final token in <String?>[null, '']) {
-        final adapter = _FakeAdapter((_) async => _jsonBody(<String, Object?>{}));
+        final adapter = _FakeAdapter(
+          (_) async => _jsonBody(<String, Object?>{}),
+        );
         final client = NetworkFactory.createClient(
           config: _config,
           tokenProvider: _TokenProvider(token),
@@ -267,7 +278,10 @@ void main() {
         );
 
         await client.getMap('/me');
-        expect(adapter.requests.single.headers.containsKey('authorization'), isFalse);
+        expect(
+          adapter.requests.single.headers.containsKey('authorization'),
+          isFalse,
+        );
       }
     });
   });
@@ -294,26 +308,23 @@ void main() {
       await client.getMap('/ping');
 
       expect(logger.hasMessage('→ GET https://api.test/ping'), isTrue);
-      expect(
-        logger.records.any((r) => r.message.startsWith('← 200')),
-        isTrue,
-      );
+      expect(logger.records.any((r) => r.message.startsWith('← 200')), isTrue);
     });
 
     test('默认不记录请求体，logBody 打开后才记录', () async {
       for (final logBody in <bool>[false, true]) {
         final logger = MemoryLogger();
-        final adapter = _FakeAdapter((_) async => _jsonBody(<String, Object?>{}));
+        final adapter = _FakeAdapter(
+          (_) async => _jsonBody(<String, Object?>{}),
+        );
         final dio = Dio(BaseOptions(baseUrl: _config.apiBaseUrl))
           ..httpClientAdapter = adapter
           ..interceptors.add(
             RequestLogInterceptor(logger: logger, logBody: logBody),
           );
 
-        await ApiClient(dio: dio).postMap(
-          '/login',
-          body: <String, Object?>{'account': 'demo'},
-        );
+        await ApiClient(dio: dio)
+            .postMap('/login', body: <String, Object?>{'account': 'demo'});
 
         final requestLog = logger.records.first;
         if (logBody) {
@@ -335,7 +346,10 @@ void main() {
         adapter: adapter,
       );
 
-      await expectLater(client.getMap('/ping'), throwsA(isA<NetworkException>()));
+      await expectLater(
+        client.getMap('/ping'),
+        throwsA(isA<NetworkException>()),
+      );
       expect(logger.hasLevel(LogLevel.warn), isTrue);
     });
   });

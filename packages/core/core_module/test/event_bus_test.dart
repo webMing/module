@@ -93,9 +93,8 @@ void main() {
 
     test('异常交给 onError 回调', () {
       final errors = <Object>[];
-      final bus = EventBus(
-        onError: (error, stackTrace) => errors.add(error),
-      )..subscribe<_OrderCreated>((_) => throw StateError('boom'));
+      final bus = EventBus(onError: (error, stackTrace) => errors.add(error))
+        ..subscribe<_OrderCreated>((_) => throw StateError('boom'));
 
       bus.publish(const _OrderCreated('1'));
       expect(errors.single, isA<StateError>());
@@ -112,7 +111,9 @@ void main() {
         seen.add('first:${event.orderId}');
         unsubscribe();
       });
-      bus.subscribe<_OrderCreated>((event) => seen.add('second:${event.orderId}'));
+      bus.subscribe<_OrderCreated>(
+        (event) => seen.add('second:${event.orderId}'),
+      );
 
       bus.publish(const _OrderCreated('1'));
 

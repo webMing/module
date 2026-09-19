@@ -94,20 +94,24 @@ ModuleRegistry _bootedRegistry() => ModuleRegistry()
 void main() {
   group('RouteDefinition', () {
     test('实现 ModuleContribution，可被注册表收集', () {
-      expect(RouteDefinition.page('/a', _HomePage.new), isA<ModuleContribution>());
+      expect(
+        RouteDefinition.page('/a', _HomePage.new),
+        isA<ModuleContribution>(),
+      );
     });
 
     test('page 构造器把无参构造函数包装成工厂', () {
       final definition = RouteDefinition.page('/home', _HomePage.new);
-      final page = definition.factory(
-        const ModuleRouteContext(path: '/home'),
-      );
+      final page = definition.factory(const ModuleRouteContext(path: '/home'));
       expect(page, isA<_HomePage>());
       expect(definition.name, isNull);
     });
 
     test('toString 带出路径', () {
-      expect(RouteDefinition.page('/a', _HomePage.new).toString(), 'RouteDefinition(/a)');
+      expect(
+        RouteDefinition.page('/a', _HomePage.new).toString(),
+        'RouteDefinition(/a)',
+      );
     });
   });
 
@@ -187,9 +191,7 @@ void main() {
     test('/ 被应用保留，模块注册时报错', () {
       expect(
         () => AppRouter.fromRoutes(
-          routes: <RouteDefinition>[
-            RouteDefinition.page('/', _HomePage.new),
-          ],
+          routes: <RouteDefinition>[RouteDefinition.page('/', _HomePage.new)],
           initialLocation: '/a',
         ),
         throwsA(isA<StateError>()),
@@ -206,7 +208,10 @@ void main() {
           .map((route) => route.path)
           .toList();
 
-      expect(paths, containsAll(<String>['/', '/login', '/home', '/detail/:id']));
+      expect(
+        paths,
+        containsAll(<String>['/', '/login', '/home', '/detail/:id']),
+      );
       appRouter.dispose();
     });
   });
@@ -259,7 +264,10 @@ void main() {
   group('与 ModuleBus 集成', () {
     testWidgets('协议地址经 ModuleBus 落地为真实跳转', (tester) async {
       final registry = _bootedRegistry();
-      final appRouter = AppRouter.fromRegistry(registry, initialLocation: '/login');
+      final appRouter = AppRouter.fromRegistry(
+        registry,
+        initialLocation: '/login',
+      );
       final bus = ModuleBus(registry: registry, navigator: appRouter);
 
       await _pump(tester, appRouter.router);
@@ -282,7 +290,10 @@ void main() {
 
     testWidgets('未知 scheme 返回失败响应且不跳转', (tester) async {
       final registry = _bootedRegistry();
-      final appRouter = AppRouter.fromRegistry(registry, initialLocation: '/home');
+      final appRouter = AppRouter.fromRegistry(
+        registry,
+        initialLocation: '/home',
+      );
       final bus = ModuleBus(registry: registry, navigator: appRouter);
 
       await _pump(tester, appRouter.router);
@@ -344,12 +355,9 @@ class _NamedRouteModule implements AppModule {
       const ModuleDescriptor(id: 'named', version: '1.0.0');
 
   @override
-  void register(ModuleRegistrar registrar) => registrar.registerRoute(
-    '/named',
-    (context) {
-      onBuild();
-      return const _HomePage();
-    },
-    name: 'home-named',
-  );
+  void register(ModuleRegistrar registrar) =>
+      registrar.registerRoute('/named', (context) {
+        onBuild();
+        return const _HomePage();
+      }, name: 'home-named');
 }

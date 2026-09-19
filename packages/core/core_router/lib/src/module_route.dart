@@ -57,11 +57,7 @@ class ModuleRouteContext {
 @immutable
 class RouteDefinition implements ModuleContribution {
   /// 用页面工厂创建。
-  const RouteDefinition({
-    required this.path,
-    required this.factory,
-    this.name,
-  });
+  const RouteDefinition({required this.path, required this.factory, this.name});
 
   /// 用无参数页面创建（`HomePage.new` 这类构造函数可直接传入）。
   RouteDefinition.page(String path, Widget Function() builder, {String? name})

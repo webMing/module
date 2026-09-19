@@ -70,7 +70,9 @@ ModuleBus _busWith(ModuleProtocol protocol, {ModuleNavigator? navigator}) {
 void main() {
   group('open 成功路径', () {
     test('返回协议给出的响应', () async {
-      final bus = _busWith(_StubProtocol(response: const ModuleResponse.done()));
+      final bus = _busWith(
+        _StubProtocol(response: const ModuleResponse.done()),
+      );
       final response = await bus.open('product://detail');
       expect(response, isA<DoneResponse>());
     });
@@ -136,10 +138,7 @@ void main() {
 
     test('没有 scheme 的地址抛 ArgumentError', () async {
       final bus = _busWith(_StubProtocol());
-      expect(
-        () => bus.open('/login'),
-        throwsA(isA<ArgumentError>()),
-      );
+      expect(() => bus.open('/login'), throwsA(isA<ArgumentError>()));
     });
 
     test('target 在只有 path 时退回 path', () {
@@ -161,7 +160,10 @@ void main() {
     });
 
     test('协议抛 AppException 时原样返回', () async {
-      const failure = NetworkException('断网', kind: NetworkErrorKind.noConnection);
+      const failure = NetworkException(
+        '断网',
+        kind: NetworkErrorKind.noConnection,
+      );
       final bus = _busWith(_StubProtocol(error: failure));
 
       final response = await bus.open('product://detail');
@@ -172,7 +174,10 @@ void main() {
       final bus = _busWith(_StubProtocol(error: StateError('boom')));
       final response = await bus.open('product://detail');
 
-      expect((response as FailureResponse).error.code, 'module.protocol_failed');
+      expect(
+        (response as FailureResponse).error.code,
+        'module.protocol_failed',
+      );
       expect(response.error.cause, isA<StateError>());
       expect(response.error.effectiveStackTrace, isNotNull);
     });
@@ -214,15 +219,18 @@ void main() {
 
   group('buildLocation', () {
     test('填充路径占位符', () {
-      expect(buildLocation('/product/:id', <String, String>{'id': '7'}), '/product/7');
+      expect(
+        buildLocation('/product/:id', <String, String>{'id': '7'}),
+        '/product/7',
+      );
     });
 
     test('未消费的参数追加为 query', () {
       expect(
-        buildLocation(
-          '/product/:id',
-          <String, String>{'id': '7', 'tab': 'detail'},
-        ),
+        buildLocation('/product/:id', <String, String>{
+          'id': '7',
+          'tab': 'detail',
+        }),
         '/product/7?tab=detail',
       );
     });

@@ -23,9 +23,9 @@ void registerHomeRoutes(ModuleRegistrar registrar) {
         return HomePage(
           account: session?.account ?? '',
           loginMethodLabel: session?.method.label,
-          onLogout: () => registrar.locator
-              .get<EventBus>()
-              .publish(const LogoutRequestedEvent()),
+          onLogout: () => registrar.locator.get<EventBus>().publish(
+            const LogoutRequestedEvent(),
+          ),
         );
       },
     ),

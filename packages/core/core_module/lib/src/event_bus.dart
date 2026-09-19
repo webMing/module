@@ -56,8 +56,7 @@ class EventBus {
   }
 
   /// [T] 是否有订阅者。
-  bool hasSubscribers<T extends Object>() =>
-      _handlers[T]?.isNotEmpty ?? false;
+  bool hasSubscribers<T extends Object>() => _handlers[T]?.isNotEmpty ?? false;
 
   /// [T] 的订阅者数量。
   int subscriberCount<T extends Object>() => _handlers[T]?.length ?? 0;

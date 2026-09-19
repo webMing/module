@@ -94,7 +94,8 @@ class Bootstrap {
     final appRouter = AppRouter.fromRegistry(
       registry,
       initialLocation: '/login',
-      errorBuilder: (context, state) => RouteErrorPage(message: '${state.error}'),
+      errorBuilder: (context, state) =>
+          RouteErrorPage(message: '${state.error}'),
     );
     locator.registerSingleton<AppNavigator>(appRouter);
 
@@ -122,9 +123,7 @@ class Bootstrap {
         unawaited(
           observability.analytics.track(
             'login_succeeded',
-            properties: <String, Object?>{
-              'method': event.session.method.name,
-            },
+            properties: <String, Object?>{'method': event.session.method.name},
           ),
         );
       }),

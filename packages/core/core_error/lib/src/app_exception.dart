@@ -11,12 +11,7 @@ import 'package:meta/meta.dart';
 @immutable
 abstract class AppException implements Exception {
   /// 创建一个应用异常。
-  const AppException(
-    this.message, {
-    this.code,
-    this.cause,
-    this.stackTrace,
-  });
+  const AppException(this.message, {this.code, this.cause, this.stackTrace});
 
   /// 面向开发者的错误描述。
   final String message;

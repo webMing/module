@@ -16,20 +16,14 @@ extension ModuleRegistrarRoutes on ModuleRegistrar {
   ///   (context) => ProductDetailPage(id: context.pathParam('id')!),
   /// );
   /// ```
-  void registerRoute(
-    String path,
-    ModulePageFactory factory, {
-    String? name,
-  }) => contribute(RouteDefinition(path: path, factory: factory, name: name));
+  void registerRoute(String path, ModulePageFactory factory, {String? name}) =>
+      contribute(RouteDefinition(path: path, factory: factory, name: name));
 
   /// 登记一条无参数页面路由。
   ///
   /// ```dart
   /// registrar.registerPage('/home', HomePage.new);
   /// ```
-  void registerPage(
-    String path,
-    Widget Function() builder, {
-    String? name,
-  }) => contribute(RouteDefinition.page(path, builder, name: name));
+  void registerPage(String path, Widget Function() builder, {String? name}) =>
+      contribute(RouteDefinition.page(path, builder, name: name));
 }

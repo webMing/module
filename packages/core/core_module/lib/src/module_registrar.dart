@@ -85,9 +85,7 @@ class ModuleRegistrar {
     final scheme = protocol.scheme;
     final existing = _protocols[scheme];
     if (existing != null) {
-      throw StateError(
-        '模块 $moduleId 重复注册协议 scheme：$scheme',
-      );
+      throw StateError('模块 $moduleId 重复注册协议 scheme：$scheme');
     }
     _protocols[scheme] = protocol;
   }

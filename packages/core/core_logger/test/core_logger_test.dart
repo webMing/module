@@ -95,7 +95,10 @@ void main() {
 
     test('records 是只读视图，clear 清空', () {
       final logger = MemoryLogger()..info('a');
-      expect(() => logger.records.add(logger.records.first), throwsUnsupportedError);
+      expect(
+        () => logger.records.add(logger.records.first),
+        throwsUnsupportedError,
+      );
       logger.clear();
       expect(logger.records, isEmpty);
     });

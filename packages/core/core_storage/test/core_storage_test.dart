@@ -112,17 +112,11 @@ void main() {
       final store = JsonStore(
         InMemoryKeyValueStore(initial: <String, String>{'arr': '[1,2]'}),
       );
-      expect(
-        () => store.readMap('arr'),
-        throwsA(isA<StorageException>()),
-      );
+      expect(() => store.readMap('arr'), throwsA(isA<StorageException>()));
     });
 
     test('decodeMap 正常解析', () {
-      expect(
-        JsonStore.decodeMap('{"a":1}'),
-        <String, Object?>{'a': 1},
-      );
+      expect(JsonStore.decodeMap('{"a":1}'), <String, Object?>{'a': 1});
     });
   });
 }

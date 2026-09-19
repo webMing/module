@@ -63,6 +63,5 @@ final class InMemoryAnalyticsSink implements AnalyticsSink {
   Future<void> setUserId(String? userId) async => this.userId = userId;
 
   @override
-  Future<void> trackScreen(String screenName) async =>
-      _screens.add(screenName);
+  Future<void> trackScreen(String screenName) async => _screens.add(screenName);
 }

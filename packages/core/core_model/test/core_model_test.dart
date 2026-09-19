@@ -67,10 +67,7 @@ void main() {
     test('readDateTime 解析 ISO-8601，非法值返回 null', () {
       final json = <String, Object?>{'at': '2024-05-01T10:00:00.000Z'};
       expect(json.readDateTime('at'), DateTime.utc(2024, 5, 1, 10));
-      expect(
-        <String, Object?>{'at': 'nope'}.readDateTime('at'),
-        isNull,
-      );
+      expect(<String, Object?>{'at': 'nope'}.readDateTime('at'), isNull);
     });
 
     test('readMap 读取嵌套对象', () {

@@ -178,7 +178,10 @@ void main() {
       );
 
       expect(observability.performance.trace('sync', () => 1), 1);
-      expect(await observability.performance.traceAsync('async', () async {}), isNull);
+      expect(
+        await observability.performance.traceAsync('async', () async {}),
+        isNull,
+      );
       observability.performance.startTrace('manual').stop();
       expect(performance.started, <String>['sync', 'async', 'manual']);
 
@@ -196,8 +199,10 @@ void main() {
       const monitor = NoopPerformanceMonitor();
       expect(monitor.trace('t', () => 'v'), 'v');
       expect(await monitor.traceAsync('t', () async => 'v'), 'v');
-      expect(() => monitor.trace('t', () => throw StateError('boom')),
-          throwsStateError);
+      expect(
+        () => monitor.trace('t', () => throw StateError('boom')),
+        throwsStateError,
+      );
 
       final trace = monitor.startTrace('t')
         ..putAttribute('k', 'v')

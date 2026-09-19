@@ -24,13 +24,17 @@ void main() {
   group('NetworkException', () {
     test('可重试判定：超时与无连接可重试', () {
       expect(
-        const NetworkException('超时', kind: NetworkErrorKind.timeout)
-            .isRetryable,
+        const NetworkException(
+          '超时',
+          kind: NetworkErrorKind.timeout,
+        ).isRetryable,
         isTrue,
       );
       expect(
-        const NetworkException('断网', kind: NetworkErrorKind.noConnection)
-            .isRetryable,
+        const NetworkException(
+          '断网',
+          kind: NetworkErrorKind.noConnection,
+        ).isRetryable,
         isTrue,
       );
     });
@@ -56,21 +60,27 @@ void main() {
 
     test('可重试判定：取消与负载错误不可重试', () {
       expect(
-        const NetworkException('已取消', kind: NetworkErrorKind.cancelled)
-            .isRetryable,
+        const NetworkException(
+          '已取消',
+          kind: NetworkErrorKind.cancelled,
+        ).isRetryable,
         isFalse,
       );
       expect(
-        const NetworkException('结构不对', kind: NetworkErrorKind.badPayload)
-            .isRetryable,
+        const NetworkException(
+          '结构不对',
+          kind: NetworkErrorKind.badPayload,
+        ).isRetryable,
         isFalse,
       );
     });
 
     test('badResponse 但没有状态码时不可重试', () {
       expect(
-        const NetworkException('未知响应', kind: NetworkErrorKind.badResponse)
-            .isRetryable,
+        const NetworkException(
+          '未知响应',
+          kind: NetworkErrorKind.badResponse,
+        ).isRetryable,
         isFalse,
       );
     });
