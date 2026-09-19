@@ -57,7 +57,7 @@ void main() {
   });
 
   group('child', () {
-    test('改名但继承 minLevel，且不共享记录', () {
+    test('改名但继承 minLevel，并与父共享记录缓冲', () {
       final parent = MemoryLogger(name: 'app', minLevel: LogLevel.info);
       final child = parent.child('app.db');
 
@@ -65,8 +65,22 @@ void main() {
       expect(child.name, 'app.db');
       expect(child.minLevel, LogLevel.info);
       expect(child.records.single.name, 'app.db');
-      expect(parent.records, isEmpty);
+      expect(
+        parent.records.single.name,
+        'app.db',
+        reason: '子来源日志应能在父 logger 上断言（共享同一缓冲）',
+      );
       expect(child.isEnabled(LogLevel.debug), isFalse);
+    });
+
+    test('子 logger 的过滤结果同样只在父缓冲里留一份', () {
+      final parent = MemoryLogger(minLevel: LogLevel.warn);
+      final child = parent.child('child');
+
+      child.info('被过滤');
+      child.error('保留');
+
+      expect(parent.records.map((r) => r.message), <String>['保留']);
     });
   });
 

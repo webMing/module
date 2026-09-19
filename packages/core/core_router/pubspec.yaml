@@ -13,11 +13,12 @@ dependencies:
     sdk: flutter
   go_router: ^18.0.1
   core_module: ^0.0.1
-  meta: ^1.19.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  # 测试里直接构造 ServiceLocator 来 boot 注册表。
+  core_di: ^0.0.1
 
 flutter:

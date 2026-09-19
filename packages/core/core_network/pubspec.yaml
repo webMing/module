@@ -13,6 +13,7 @@ dependencies:
   core_config: ^0.0.1
   core_error: ^0.0.1
   core_logger: ^0.0.1
+  core_model: ^0.0.1
   meta: ^1.19.0
 
 dev_dependencies:

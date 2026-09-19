@@ -62,6 +62,23 @@ class AppConfig {
   /// 是否为生产环境。
   bool get isProduction => environment.isProduction;
 
+  /// 复制并覆盖部分字段（派生测试配置与多环境组合时使用）。
+  AppConfig copyWith({
+    AppEnvironment? environment,
+    String? apiBaseUrl,
+    Duration? connectTimeout,
+    Duration? sendTimeout,
+    Duration? receiveTimeout,
+    bool? enableLogging,
+  }) => AppConfig(
+    environment: environment ?? this.environment,
+    apiBaseUrl: apiBaseUrl ?? this.apiBaseUrl,
+    connectTimeout: connectTimeout ?? this.connectTimeout,
+    sendTimeout: sendTimeout ?? this.sendTimeout,
+    receiveTimeout: receiveTimeout ?? this.receiveTimeout,
+    enableLogging: enableLogging ?? this.enableLogging,
+  );
+
   /// 校验配置，非法时抛 [ConfigException]。
   ///
   /// 应当在 Bootstrap 阶段调用：宁可启动即失败，也不要等到第一次发请求
