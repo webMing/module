@@ -1,0 +1,38 @@
+name: main_app
+description: "应用装配层：Bootstrap、模块清单与环境配置。"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.3
+
+resolution: workspace
+
+# 只声明本包真正 import 的东西。应用层是唯一允许依赖 feature 的包，
+# 而 feature 之间、core 与 feature 之间都不允许互相依赖。
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # 核心能力
+  core_config: ^0.0.1
+  core_di: ^0.0.1
+  core_logger: ^0.0.1
+  core_module: ^0.0.1
+  core_observability: ^0.0.1
+  core_router: ^0.0.1
+  core_session: ^0.0.1
+  core_storage: ^0.0.1
+
+  # 业务模块
+  feature_auth: ^0.0.1
+  feature_home: ^0.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
