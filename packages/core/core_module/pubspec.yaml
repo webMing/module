@@ -1,0 +1,19 @@
+name: core_module
+description: "模块系统：AppModule 契约、注册表、ModuleBus 与 EventBus。"
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.13.3
+
+resolution: workspace
+
+dependencies:
+  core_di: ^0.0.1
+  core_error: ^0.0.1
+  meta: ^1.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

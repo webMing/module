@@ -1,0 +1,21 @@
+name: core_network
+description: "网络能力：Dio 工厂、拦截器与错误映射。"
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.13.3
+
+resolution: workspace
+
+dependencies:
+  dio: ^5.11.1
+  core_config: ^0.0.1
+  core_error: ^0.0.1
+  core_logger: ^0.0.1
+  meta: ^1.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

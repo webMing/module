@@ -22,6 +22,7 @@ environment:
   sdk: ^3.13.3
 
 workspace:
+  - packages/core/*
   - packages/home
   - packages/login
   - packages/ui_kit

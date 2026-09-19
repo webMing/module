@@ -1,0 +1,18 @@
+name: core_di
+description: "依赖注入门面：封装 GetIt，供模块注册自身依赖。"
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.13.3
+
+resolution: workspace
+
+dependencies:
+  get_it: ^9.2.1
+  meta: ^1.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

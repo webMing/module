@@ -1,0 +1,17 @@
+name: core_logger
+description: "日志抽象：级别、结构化字段与控制台实现。"
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.13.3
+
+resolution: workspace
+
+dependencies:
+  meta: ^1.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

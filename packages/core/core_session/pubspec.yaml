@@ -1,0 +1,20 @@
+name: core_session
+description: "会话契约：AuthSession/LoginMethod 与响应式会话存储。"
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: ^3.13.3
+
+resolution: workspace
+
+dependencies:
+  core_model: ^0.0.1
+  core_storage: ^0.0.1
+  signals: ^7.1.0
+  meta: ^1.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
