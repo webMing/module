@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
-import 'package:ui_kit/ui_kit.dart';
+import 'package:design_system/design_system.dart';
 
 /// 首页模块。
 ///

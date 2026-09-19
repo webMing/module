@@ -1,5 +1,5 @@
-name: home
-description: "A new Flutter package project."
+name: feature_home
+description: "首页模块：登录后的落地页与退出登录。"
 version: 0.0.1
 homepage:
 
@@ -13,7 +13,14 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  ui_kit: ^0.0.1
+  design_system: ^0.0.1
+  signals: ^7.1.0
+  # 模块系统与核心能力（按架构约束，feature 只能依赖 core / shared）
+  core_di: ^0.0.1
+  core_error: ^0.0.1
+  core_module: ^0.0.1
+  core_router: ^0.0.1
+  core_session: ^0.0.1
 
 dev_dependencies:
   flutter_test:

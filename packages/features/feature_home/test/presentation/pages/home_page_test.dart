@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:home/home.dart';
+import 'package:feature_home/src/presentation/pages/home_page.dart';
 
 void main() {
   testWidgets('展示账号与登录方式', (tester) async {
