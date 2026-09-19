@@ -5,6 +5,9 @@
 > **技术栈基线**：Pub Workspace + Melos 8 + go_router + signals + get_it + Dio + Freezed / json_serializable + very_good_analysis。
 >
 > **设计立场**：核心能力自研（`ModuleRegistry` / `ModuleRegistrar` / `ModuleDescriptor` / `ModuleBus` / `ModuleProtocol` / `EventBus`），**不再引入任何"大型模块化框架"**；只在状态、导航、DI、网络这些成熟问题上使用成熟的库。
+>
+> **实现状态**：本设计已在仓库中落地——15 个成员包、`dart analyze` 覆盖 `apps/` + `packages/` 零问题、290 个测试全部通过。
+> **本文示例与真实 API 有若干差异，请以[附录 A：实现现状](#附录-a实现现状as-built)为准**（含差异清单、已知缺口与实现中发现的 API 陷阱）。
 
 ---
 
@@ -29,7 +32,7 @@
 | 15 | [Melos + Pub Workspace](#15-melos--pub-workspace) | Monorepo 工程管理 |
 | 16 | [Observability 层](#16-生产环境还需要一层observability) | 日志/崩溃/监控 |
 | 17 | [最终完整版](#17-最终完整版) | 全图与职责边界 |
-| A | [附录 A：目标结构 vs 当前仓库现状](#附录-a目标结构-vs-当前仓库现状) | 落地差距 |
+| A | [附录 A：实现现状（as-built）](#附录-a实现现状as-built) | 已落地的 API、差异清单、缺口、验证结果 |
 
 ---
 
@@ -272,17 +275,33 @@ class ProductModule implements AppModule {
 
   @override
   void register(ModuleRegistrar registrar) {
+    // 无参数页面用 registerPage，签名与 `ProductDetailPage.new` 对齐
+    registrar.registerPage(
+      '/product/list',
+      ProductListPage.new,
+    );
+
+    // 带路径参数的页面用 registerRoute，从上下文取参数
     registrar.registerRoute(
-      '/product/detail',
-      ProductDetailPage.new,
+      '/product/detail/:id',
+      (context) => ProductDetailPage(id: context.pathParam('id')!),
     );
 
     registrar.registerProtocol(
-      ProductProtocol(),
+      const ProductProtocol(),
     );
   }
 }
 ```
+
+> **实现差异**：`registerRoute` 的工厂签名是
+> `Widget Function(ModuleRouteContext)` 而不是 `Widget Function()`——
+> 否则 `/product/detail/:id` 这类带参路由无法表达。无参数页面保留了
+> 文档原本的写法（`registerPage('/list', ProductListPage.new)`）。
+>
+> `registerRoute` 来自 `core_router` 对 `ModuleRegistrar` 的**扩展方法**：
+> `core_module` 是纯 Dart 包，不认识 `Widget`；路由能力通过
+> `ModuleContribution` 这个标记接口插进来。
 
 三个角色的分工：
 
@@ -366,14 +385,27 @@ GetIt
  └── ProductRepository
 ```
 
-业务模块通过 `ModuleRegistrar` 注册自己的依赖：
+业务模块通过 `ModuleRegistrar` 注册自己的依赖。
+
+> **实现差异**：工厂收到容器（`ServiceLocator`），因此模块可以声明式地解析
+> 其它依赖，而不是只能传无参构造函数。`register` 阶段容器尚未就绪，所以
+> 需要「读容器状态」的注册逻辑（例如给端口装兜底实现）用 `onBoot`：
 
 ```dart
 class ProductModule implements AppModule {
   @override
   void register(ModuleRegistrar registrar) {
-    registrar.singleton<ProductRepository>(
-      ProductRepositoryImpl.new,
+    // 兜底：应用没有自己提供数据源时才安装演示实现
+    registrar.onBoot((locator) {
+      if (!locator.isRegistered<ProductRemoteDataSource>()) {
+        locator.registerLazySingleton<ProductRemoteDataSource>(
+          FakeProductDataSource.new,
+        );
+      }
+    });
+
+    registrar.lazySingleton<ProductRepository>(
+      (locator) => ProductRepositoryImpl(locator.get<ProductRemoteDataSource>()),
     );
   }
 }
@@ -843,32 +875,140 @@ FirebaseCrashlytics.instance...
 
 ---
 
-## 附录 A：目标结构 vs 当前仓库现状
+## 附录 A：实现现状（as-built）
 
-> 本节由仓库实际状态核对得出，用于规划落地路径；与上面的目标架构对照阅读。
+> 上文是**设计**；本附录是**已落地的实现**，以及与设计不一致的地方。
+> 核对结果：`dart analyze` 覆盖 `apps/` + `packages/` **零问题**，15 个成员包
+> 共 **290 个测试全部通过**。
 
-当前工作区（`module/`）是**单应用 + 少量共享包的起步形态**：
+### A.1 实际工作区结构
 
-| 维度 | 目标架构 | 当前现状 |
+```text
+module/                              # 工作区根：module_workspace（纯配置宿主，非应用包）
+├── apps/
+│   └── main_app/                    # 应用装配层（含 android/ios/web/linux/macos/windows）
+│       └── lib/
+│           ├── main.dart            # 入口：读 DEEP_LINK → Bootstrap → runApp
+│           ├── bootstrap.dart       # 唯一的装配点（Composition Root）
+│           └── src/app.dart         # ModuleApp：只把路由器交给 CupertinoApp.router
+├── packages/
+│   ├── core/                        # 11 个核心包
+│   │   ├── core_model/       core_error/         core_config/
+│   │   ├── core_logger/      core_di/            core_storage/
+│   │   ├── core_session/     core_observability/
+│   │   ├── core_network/     core_router/        core_module/
+│   ├── features/
+│   │   ├── feature_auth/            # 由 packages/login 迁移
+│   │   └── feature_home/            # 由 packages/home 迁移
+│   └── shared/
+│       └── design_system/           # 由 packages/ui_kit 迁移
+├── docs/
+└── pubspec.yaml                     # workspace: apps/main_app + packages/{core,features,shared}/*
+```
+
+包职责对照（设计第 17 章 → 实际落地）：
+
+| 设计中的角色 | 实际包 | 说明 |
 | --- | --- | --- |
-| 仓库形态 | `apps/main_app` + `packages/{core,features,shared}` | 根目录即 Flutter 应用，`packages/` 下为 `home` / `login` / `ui_kit` |
-| 工作区声明 | 根 `pubspec.yaml` 的 `workspace:` 列 `apps/*`、`packages/**` | `workspace:` 列 `packages/home`、`packages/login`、`packages/ui_kit` |
-| 模块契约 | `AppModule` / `ModuleDescriptor` / `ModuleRegistrar` | 尚未引入 |
-| 模块通信 | `ModuleBus` + `ModuleProtocol` + `EventBus` | 尚未引入，页面间通过 go_router 直接跳转 |
-| 已有基础 | `core_*` 系列包 | 依赖已就位：`go_router` ✅ `signals` ✅ `get_it` ✅ `dio` ✅ `freezed` / `json_serializable` ✅ `melos` ✅ `very_good_analysis` ✅ |
-| 设计系统 | `packages/shared/design_system` | `packages/ui_kit` 已承担该角色，可直接迁移更名 |
+| ModuleRegistry / ModuleRegistrar / ModuleBus / EventBus | `core_module` | **纯 Dart**，不依赖 Flutter |
+| Router / RouteDefinition | `core_router` | 通过 `ModuleContribution` 扩展接入模块系统 |
+| DI | `core_di` | `ServiceLocator` 门面（封装 GetIt） |
+| 会话状态 | `core_session` | **设计清单外新增**，理由见 A.3 |
+| Observability | `core_observability` | 门面 + 端口 + noop 实现 |
+| Network | `core_network` | Dio 装配 + 错误归一化 |
+| Storage | `core_storage` | `KeyValueStore` 端口 + 内存实现 + JSON 助手 |
+| Logger / Error / Config / Model | `core_logger` `core_error` `core_config` `core_model` | |
+| design_system | `shared/design_system` | |
 
-落地建议顺序（每步都可独立验证、不破坏现有可运行状态）：
+### A.2 模块内部结构（以 `feature_auth` 为样板）
 
-1. **目录对齐**：把现有 `ui_kit` 视作 `shared/design_system`，`login` / `home` 视作最初的 feature 包；
-2. **抽出 core_module**：实现 `AppModule` / `ModuleDescriptor` / `ModuleRegistrar` / `ModuleRegistry` 并补单元测试；
-3. **改造一个模块**：选 `login` 或 `home` 作为样板，补 `module/` 与 `router/`，把路由从根应用迁入模块；
-4. **引入 Bootstrap**：根 `main.dart` 退化为 `runApp` + `bootstrap()`，装配逻辑集中到 `bootstrap.dart`；
-5. **补 ModuleBus 与协议**：先支持 `open(uri)` 的页面跳转，再扩展到无 UI 动作；
-6. **补 EventBus**：从一个真实跨模块场景（如登录成功）切入，避免空转的抽象；
-7. **补 core_observability**：先包一层 `Logger`，再按需接入崩溃与埋点；
-8. **拆 apps/main_app**：当 feature 数量增长到需要独立发版时，再把应用层下沉到 `apps/`。
+```text
+packages/features/feature_auth/
+├── lib/
+│   ├── feature_auth.dart            # 公开契约：module + protocol + 需被实现的端口
+│   ├── testing.dart                 # 测试/演示入口：只导出 FakeAuthService
+│   └── src/
+│       ├── module/                  # auth_descriptor / auth_events / auth_module
+│       ├── protocol/                # auth_protocol（scheme = 'auth'）
+│       ├── router/                  # auth_routes（registerAuthRoutes）
+│       ├── presentation/
+│       │   ├── pages/               # login_page / reset_password_page
+│       │   ├── widgets/             # countdown_code_button / demo_hint
+│       │   └── controllers/         # login_controller / reset_password_controller
+│       ├── domain/
+│       │   ├── entities/            # sms_code_receipt
+│       │   ├── repositories/        # auth_repository（抽象端口）
+│       │   └── services/            # 三个校验器 + auth_failure
+│       └── data/
+│           ├── datasources/         # auth_service（端口）/ fake_auth_service
+│           └── repositories/        # auth_repository_impl
+├── test/                            # 与 src/ 同构镜像
+└── pubspec.yaml
+```
 
-> ⚠️ 与现有工程约定一致的注意事项：本仓库 `flutter` / `dart` 不在 PATH，
-> 需用 SDK 内置 dart（见 `flutter-workspace-dev` 技能）；只在仓库根执行一次 `pub get`；
-> 子包声明 `resolution: workspace`，本地包互相依赖按版本约束书写，**不用 `path:`**。
+`feature_home` 是「纯视图模块」，因此只有 `module/` + `protocol/` + `router/` +
+`presentation/pages/`——**故意不建** `domain/`、`data/`、`state/`。
+
+### A.3 与设计的差异（含理由）
+
+| # | 设计 | 实际实现 | 理由 |
+| --- | --- | --- | --- |
+| 1 | core 清单 9 个包 | 新增 `core_session` | 「feature 不得互相依赖」+「登录态需被首页读取」两条约束同时成立时，会话契约必须下沉到 core，否则 home 只能依赖 auth |
+| 2 | `registerRoute(path, ProductDetailPage.new)` | `registerPage(path, Widget Function())` + `registerRoute(path, Widget Function(ModuleRouteContext))` | 原签名无法表达 `/detail/:id`；无参页面保留原写法 |
+| 3 | `ModuleProtocol` 直接执行动作 | `handle()` 返回 `ModuleResponse`（如 `navigate('/x')`），由 `ModuleBus` 通过 `ModuleNavigator` 端口落地 | 协议保持纯翻译 ⇒ 可 `const` 构造、可脱离 Flutter 单测 |
+| 4 | `registrar.singleton<T>(T Function())` | `registrar.singleton<T>(T Function(ServiceLocator))` | 工厂需要解析其它依赖；同时新增 `onBoot()` 表达「应用没提供才装兜底实现」 |
+| 5 | barrel 只暴露 module + protocol | 另加「其它层必须实现的端口」（`AuthService` 及其异常/回执类型），假实现单独放 `testing.dart` | 应用层是 composition root，必须能实现端口接真实后端；把 fake 挪到 `testing.dart` 后生产代码无法误用 |
+| 6 | 每个 feature 都有 `state/` | `feature_auth` 无 `state/` | 会话状态在 `core_session`，页面级状态在 `presentation/controllers`；不为对齐模板造空目录 |
+| 7 | 根目录有 `melos.yaml` | melos 配置仍在根 `pubspec.yaml` 的 `melos:` 段 | Melos 8 原生支持该写法且当前可用；拆出 `melos.yaml` 属于纯搬迁，留待需要时再做 |
+| 8 | dev 依赖含 `very_good_analysis` | 已声明，但实际生效的是 `flutter_lints` | 换用 very_good_analysis 会对既有代码产生大量新增 lint，需单独一次批量整改 |
+| 9 | 应用包名 `module` | 根为 `module_workspace`（非包），应用为 `apps/main_app`（`name: main_app`） | 工作区根不应同时是应用包；`useRootAsPackage: false` |
+| 10 | 模块清单示例 6 个 feature | 实际 2 个（`feature_auth` / `feature_home`） | 只落地真实存在的业务；`feature_product` / `feature_order` 等仍为示例 |
+
+### A.4 尚未实现 / 已知缺口
+
+| 项 | 现状 | 触发条件 |
+| --- | --- | --- |
+| `core_network` 生产消费方 | 无：演示环境用 `FakeAuthService`，不发起真实请求 | 接入真实后端时，实现 `AuthService` 的 HTTP 版本 |
+| `core_storage` 持久化实现 | 只有 `InMemoryKeyValueStore`（会话可写入但重启即失） | 需要真正的本地持久化时，引入存储插件并新增一个 `KeyValueStore` 实现 |
+| `shared/common_widgets`、`shared/common_utils` | 未创建 | 出现**跨模块**共享的非设计系统代码时再建，避免空壳包 |
+| feature 独立 Git 仓库 | 未拆分：仍在一个 monorepo 内 | 依赖面已收敛到 `core` + `shared`，具备整包搬运条件 |
+| protocol 的无 UI 动作 | `ModuleBus` 已支持（`ModuleResponse.value/done`），但暂无此类协议实例 | 出现「调用模块做一件事并取返回值」的真实需求时 |
+| `ModuleDescriptor.requires` | 已实现并在 boot 校验，实际两个模块都无此声明 | 出现真实的协议级依赖时 |
+
+### A.5 验证结果
+
+`dart analyze apps packages` → **No issues found!**（Melos 以 `--fatal-infos`
+运行，因此 info 级 lint 也必须为零）
+
+| 包 | 用例数 | 包 | 用例数 |
+| --- | --- | --- | --- |
+| core_module | 51 | core_network | 22 |
+| core_session | 19 | core_router | 18 |
+| core_error | 12 | core_logger | 12 |
+| core_model | 11 | core_config | 11 |
+| core_storage | 11 | core_observability | 11 |
+| core_di | 7 | design_system | 4 |
+| **feature_auth** | **93** | **feature_home** | **3** |
+| main_app（端到端） | 5 | **合计** | **290** |
+
+`main_app` 的 5 个端到端用例走的是**真实装配链路**（`Bootstrap.run` →
+`ModuleRegistry.boot` → 模块路由 → `EventBus` → 跳转），其中两个专门验证
+深链：`home://root` 经 Module Protocol 直达首页，未注册的 scheme 不阻塞启动。
+
+### A.6 实现过程中暴露并修掉的真实陷阱
+
+这些是设计文档看不出来、只有跑起来才会发现的问题，记录下来避免重犯：
+
+1. **`go_router` 的 `push()` Future 只在被压入页面 `pop()` 时才完成**。
+   `AppNavigator.push` 若 `await` 它，调用方会一直挂起（测试表现为 10 分钟超时）。
+   现在 `push` 显式 fire-and-forget。
+2. **`signals` 7 的 `subscribe()` 会立即回调一次当前值**，而不是等首次变更。
+   按「订阅后只收变更」写断言会多出一个初始值。
+3. **dio 5.11 新增了 `DioExceptionType.transformTimeout`**，
+   对它做 `switch` 如果不写全就会编译失败（非穷尽）。已归入 timeout 语义。
+4. **重复 dispose 会让 go_router 抛 "used after being disposed"**。
+   `Bootstrap.dispose()` 因此做成幂等。
+5. **`MemoryLogger.child()` 若不共享父缓冲**，在父 logger 上断言子来源日志会
+   得到空列表；已改为共享同一缓冲（与真实日志层级语义一致）。
+6. **dio 5.11 默认注入 `ImplyContentTypeInterceptor`**，
+   所以「未配置拦截器」不能断言 `interceptors.isEmpty`，要按类型断言。
