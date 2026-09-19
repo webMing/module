@@ -10,7 +10,7 @@
 | 名称 | 是什么 | 归属 | 本项目现状 |
 | --- | --- | --- | --- |
 | **DSH skill** | 磁盘上的 Markdown 指令包，agent 按需加载 | DSH 机制（`dsh-skill-filesystem` + `dsh-tool-skill`） | ✅ 已启用（base bundle 默认挂载） |
-| **Dart MCP** | `dart mcp-server` 子命令，以 stdio 暴露 Dart/Flutter 工具 | Dart SDK | ✅ 服务端实测可用；DSH 已接入并验证（加载 24 个 `mcp__dart__*` 工具） |
+| **Dart MCP** | `dart mcp-server` 子命令，以 stdio 暴露 Dart/Flutter 工具 | Dart SDK | ✅ 服务端实测可用；DSH 已接入并验证（可调用 14 个 `mcp__dart__*` 工具） |
 | **Flutter/Dart skill** | 任务型指令包（官方 prepackaged + 包分发 + 自建） | 官方仓库 + pub 生态（`package:skills`） | ✅ 已装官方 25 个 + 自建 2 个 |
 
 ---
@@ -316,8 +316,9 @@ tools/list → 14 个工具
 
 - **必须用 `dart mcp-server` 入口，不要直接执行 bundle 里的二进制**——裸二进制会把自己的
   所在目录当作 Dart SDK，报 `Invalid Dart SDK path: .../bundle`。包装器才能正确传入 SDK 路径。
-- **实际暴露 14 个工具，而非文档列出的 24 个**。其余（`dart_fix`、`dart_format`、`run_tests`、
-  `launch_app`、`list_devices` 等）默认关闭，且客户端能力不足时服务端会发出
+- **实际暴露 14 个工具**。其余（`dart_fix`、`dart_format`、`run_tests`、
+  `launch_app`、`list_devices` 等）默认关闭，既不出现在服务端 `tools/list`，
+  也不会成为会话工具；客户端能力不足时服务端还会发出
   `notifications/message` 警告（`Client does not support th...`）。
 
 ### 5.2 DSH 接线：已生效并验证 ✅
@@ -330,14 +331,16 @@ tools/list → 14 个工具
 
 | 检查 | 结果 |
 | --- | --- |
-| 工具是否出现 | ✅ 会话中加载 **24 个** `mcp__dart__*` 工具 |
+| 工具是否出现 | ✅ 会话中可调用 **14 个** `mcp__dart__*` 工具 |
 | `roots` 调用 | ✅ `Success`（已注册项目根与 `packages/home`） |
 | `analyze_files` 调用 | ✅ 返回 `No errors` |
+| 未暴露工具的实测 | ✅ 调用 `mcp__dart__run_tests` 返回 `Error: unknown tool`，证实默认关闭项确实不可用 |
 
-结论：端到端链路（DSH → `dsh-mcp-client` → `dart mcp-server` → `dart_mcp_server` 1.1.2）**已打通**。
+结论：端到端链路（DSH → `dsh-mcp-client` → `dart mcp-server` → `dart_mcp_server` 1.1.2）**已打通**，
+可调用工具数与服务端 `tools/list` 一致（14 个）。
 
-> DSH 侧为 24 个工具、服务端 `tools/list` 为 14 个，差值来自 DSH 加载了服务端的完整工具集
-> （含默认关闭项如 `dart_fix`、`dart_format`、`run_tests`、`launch_app`）。以会话实际工具列表为准。
+> ⚠️ 曾有一版文档声称"DSH 加载 24 个工具"，**该说法已证伪**：DSH 并未额外加载服务端的
+> 默认关闭项。判断可用性的唯一可靠方式是**实际调用一次**，而非按工具数量推算。
 
 **重启是必要步骤**：`--patch` 与 profile patch 都只在启动时应用。
 

@@ -17,7 +17,7 @@
 | 资产 | 数量 | 本质 | 回答的问题 | 存放位置 |
 | --- | --- | --- | --- | --- |
 | **Skill** | **27** | Markdown 指令包，按需加载 | "该怎么做" | `.agents/skills/`（25）<br>`.dsh/skills/`（2） |
-| **MCP 工具** | **24** | 可调用的外部能力 | "能做什么" | 由 `dart mcp-server` 提供，经 DSH 桥接 |
+| **MCP 工具** | **14** | 可调用的外部能力 | "能做什么" | 由 `dart mcp-server` 提供，经 DSH 桥接 |
 
 一句话：**MCP 给锤子和钉子，Skill 给图纸和工法。**
 
@@ -29,7 +29,7 @@
       ┌─────────┴─────────┐
       ▼                   ▼
 ┌──────────────┐   ┌──────────────────────┐
-│ Skill (27)   │   │ MCP 工具 (24)         │
+│ Skill (27)   │   │ MCP 工具 (14)         │
 │ 指令/工作流   │──▶│ mcp__dart__*          │
 │ 告诉 agent   │   │ 实际执行分析/热重载等  │
 │ 如何完成任务  │   │                      │
@@ -110,12 +110,12 @@
 
 ---
 
-## 3. MCP 工具清单（24 个）
+## 3. MCP 工具清单（14 个）
 
 由 `dart mcp-server`（`dart_mcp_server` **1.1.2**）提供，经 `@deepseek-ai/dsh-mcp-client`
 以 `mcp__dart__<tool>` 命名桥接。
 
-### 3.1 服务端默认启用的 14 个
+### 3.1 实际可调用的 14 个
 
 | 工具 | 作用 | 本项目可用性 |
 | --- | --- | --- |
@@ -133,16 +133,20 @@
 | `flutter_driver_command` | 执行 flutter driver 命令 | ⚠️ 需驱动连接 |
 | `roots` | 注册/管理项目根 | ✅ 已实测（`Success`） |
 
-### 3.2 DSH 额外加载的 10 个（服务端默认关闭）
+### 3.2 未暴露的工具（服务端支持但当前会话不可调用）
 
 `create_project`、`dart_fix`、`dart_format`、`run_tests`、`launch_app`、
 `list_devices`、`list_running_apps`、`get_app_logs`、`stop_app`、`get_active_location`
 
-> ⚠️ **工具数量差异的由来**：服务端 `tools/list` 对能力受限的客户端只返回 14 个；
-> DSH 侧加载完整工具集共 24 个。**判断可用性以当前会话工具列表为准。**
+> ⚠️ **实测修正**：本文档早期版本声称"DSH 加载 24 个工具"，**该说法已证伪**。
+> 实际尝试调用 `mcp__dart__run_tests` 返回 `Error: unknown tool`，
+> 会议话中可调用的 `mcp__dart__*` 恰为上述 14 个——与服务端 `tools/list` 的返回一致。
 >
-> ⚠️ **含副作用的工具**：`dart_fix`、`dart_format` 会修改代码文件，`create_project`
-> 会在磁盘上创建工程，`run_tests` 会执行测试进程。调用前应先确认意图。
+> 原因是 `dart_mcp_server` 按客户端能力**只注册默认启用的工具**；上列 10 个默认关闭项
+> 既未出现在服务端 `tools/list`，也未成为本会话工具。若需要它们（如 `run_tests`、`dart_format`），
+> 需在 MCP 客户端/服务端侧显式启用。
+>
+> 判断可用性的唯一可靠依据：**实际调用一次并观察返回**，而不是依赖文档或工具数量推算。
 
 ### 3.3 日志中已知的警告
 
