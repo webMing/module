@@ -10,7 +10,7 @@
 | 名称 | 是什么 | 归属 | 本项目现状 |
 | --- | --- | --- | --- |
 | **DSH skill** | 磁盘上的 Markdown 指令包，agent 按需加载 | DSH 机制（`dsh-skill-filesystem` + `dsh-tool-skill`） | ✅ 已启用（base bundle 默认挂载） |
-| **Dart MCP** | `dart mcp-server` 子命令，以 stdio 暴露 Dart/Flutter 工具 | Dart SDK | ✅ 服务端**实测可用**；DSH 侧已写入配置，待重启加载 |
+| **Dart MCP** | `dart mcp-server` 子命令，以 stdio 暴露 Dart/Flutter 工具 | Dart SDK | ✅ 服务端实测可用；DSH 已接入并验证（加载 24 个 `mcp__dart__*` 工具） |
 | **Flutter/Dart skill** | 任务型指令包（官方 prepackaged + 包分发 + 自建） | 官方仓库 + pub 生态（`package:skills`） | ✅ 已装官方 25 个 + 自建 2 个 |
 
 ---
@@ -320,14 +320,26 @@ tools/list → 14 个工具
   `launch_app`、`list_devices` 等）默认关闭，且客户端能力不足时服务端会发出
   `notifications/message` 警告（`Client does not support th...`）。
 
-### 5.2 DSH 接线：配置已写入，需重启生效
+### 5.2 DSH 接线：已生效并验证 ✅
 
-- 项目覆盖层 `.dsh/cordis.patch.yml` 已修正为可用配置。
+- 项目覆盖层 `.dsh/cordis.patch.yml` 已就位（可移植、可分享）。
 - 已并入 **`~/.dsh/profiles/web/cordis.patch.yml`**（用户级、长期生效）。
 - 加载顺序：bundle patches → profile patch → `$DSH_HOME/cordis.patch.yml` → `--patch` 覆盖层。
 
-**重启是唯一生效条件**：`--patch` 与 profile patch 都只在启动时应用。
-重启 `dsh web` 会终止当前会话，因此该步骤需由使用者主动执行。
+**重启后的实测结果**：
+
+| 检查 | 结果 |
+| --- | --- |
+| 工具是否出现 | ✅ 会话中加载 **24 个** `mcp__dart__*` 工具 |
+| `roots` 调用 | ✅ `Success`（已注册项目根与 `packages/home`） |
+| `analyze_files` 调用 | ✅ 返回 `No errors` |
+
+结论：端到端链路（DSH → `dsh-mcp-client` → `dart mcp-server` → `dart_mcp_server` 1.1.2）**已打通**。
+
+> DSH 侧为 24 个工具、服务端 `tools/list` 为 14 个，差值来自 DSH 加载了服务端的完整工具集
+> （含默认关闭项如 `dart_fix`、`dart_format`、`run_tests`、`launch_app`）。以会话实际工具列表为准。
+
+**重启是必要步骤**：`--patch` 与 profile patch 都只在启动时应用。
 
 不支持"不启动验证"：`dsh --profile web --dump-config` 会在 `prepareProfile` 阶段
 **无条件重写** `cordis.yml`（源码注释：防止 Loader 把合成结果回写、导致下次启动重复插入），
