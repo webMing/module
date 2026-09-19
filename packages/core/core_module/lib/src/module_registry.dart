@@ -72,6 +72,11 @@ class ModuleRegistry {
       _registrars[module.descriptor.id] = registrar;
     }
 
+    // 1.5) 回填容器引用：模块的延迟闭包（路由工厂、协议）会用到它。
+    for (final registrar in _registrars.values) {
+      registrar.attachLocator(locator);
+    }
+
     // 2) 校验协议级依赖已满足。
     for (final module in _modules.values) {
       for (final required in module.descriptor.requires) {
@@ -98,7 +103,13 @@ class ModuleRegistry {
       });
     }
 
-    // 4) 统一应用依赖注册。
+    // 4) 先跑模块的 boot 动作（此时能读到应用已注册的基础设施），
+    //    再统一应用模块登记的依赖。
+    for (final registrar in _registrars.values) {
+      for (final action in registrar.bootActions) {
+        action(locator);
+      }
+    }
     for (final registrar in _registrars.values) {
       for (final dependency in registrar.dependencies) {
         dependency.applyTo(locator);

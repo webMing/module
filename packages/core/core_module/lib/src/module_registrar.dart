@@ -34,6 +34,40 @@ class ModuleRegistrar {
   final List<ModuleContribution> _contributions = <ModuleContribution>[];
   final Map<String, ModuleProtocol> _protocols = <String, ModuleProtocol>{};
   final List<DependencyRegistration> _dependencies = <DependencyRegistration>[];
+  final List<void Function(ServiceLocator locator)> _bootActions =
+      <void Function(ServiceLocator locator)>[];
+  ServiceLocator? _locator;
+
+  /// 容器引用。
+  ///
+  /// **在 boot 之前不可用**，因此只能用在「稍后才执行」的闭包里——典型是
+  /// 路由工厂与协议处理：
+  ///
+  /// ```dart
+  /// registrar.registerRoute(
+  ///   '/login',
+  ///   (context) => LoginPage(repository: registrar.locator.get<AuthRepository>()),
+  /// );
+  /// ```
+  ///
+  /// 这样模块可以自己完成依赖装配，不需要全局容器，也不需要把 locator
+  /// 塞进模块构造函数。
+  ServiceLocator get locator {
+    final value = _locator;
+    if (value == null) {
+      throw StateError(
+        '模块 $moduleId 的 locator 在 boot 之前不可用；'
+        '请只在路由工厂/协议处理等延迟执行的代码里访问它',
+      );
+    }
+    return value;
+  }
+
+  /// [locator] 是否已就绪。
+  bool get hasLocator => _locator != null;
+
+  /// 由 `ModuleRegistry.boot` 回填。
+  void attachLocator(ServiceLocator locator) => _locator = locator;
 
   /// 登记一项通用贡献（路由由 `core_router` 的扩展方法调用它）。
   void contribute(ModuleContribution contribution) =>
@@ -86,6 +120,28 @@ class ModuleRegistrar {
       ),
     );
   }
+
+  /// 登记一个在 **boot 阶段**执行的动作。
+  ///
+  /// 用于「注册逻辑本身需要读取容器状态」的场合，最典型的是给依赖提供
+  /// 兜底实现：
+  ///
+  /// ```dart
+  /// registrar.onBoot((locator) {
+  ///   if (!locator.isRegistered<AuthService>()) {
+  ///     locator.registerLazySingleton<AuthService>(() => FakeAuthService());
+  ///   }
+  /// });
+  /// ```
+  ///
+  /// 动作在依赖应用之前、且应用已注册完基础设施之后执行。放在这里而不是
+  /// [register] 里，是因为 [register] 阶段容器还没准备好。
+  void onBoot(void Function(ServiceLocator locator) action) =>
+      _bootActions.add(action);
+
+  /// 本模块登记的 boot 动作。
+  List<void Function(ServiceLocator locator)> get bootActions =>
+      List<void Function(ServiceLocator locator)>.unmodifiable(_bootActions);
 
   /// 本模块登记的协议（按 scheme）。
   Map<String, ModuleProtocol> get protocols =>

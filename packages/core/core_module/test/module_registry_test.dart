@@ -284,6 +284,48 @@ void main() {
 
       expect(locator.get<_NeedsRepo>().repo.name, 'real');
     });
+
+    test('onBoot 动作在依赖应用之前执行，且能读到应用已注册的基础设施', () {
+      final locator = ServiceLocator()
+        ..registerSingleton<_Repo>(const _Repo('app'));
+      final order = <String>[];
+
+      ModuleRegistry()
+        ..register(
+          _FakeModule(
+            const ModuleDescriptor(id: 'deps', version: '1'),
+            onRegister: (registrar) => registrar
+              ..onBoot((locator) => order.add('boot:${locator.get<_Repo>().name}'))
+              ..singleton<_Factory>((_) {
+                order.add('dependency');
+                return _Factory();
+              }),
+          ),
+        )
+        ..boot(locator);
+
+      expect(order, <String>['boot:app', 'dependency']);
+      expect(locator.get<_Factory>(), isA<_Factory>());
+    });
+
+    test('boot 动作可安装兜底依赖，供模块自身依赖解析', () {
+      final locator = ServiceLocator();
+      ModuleRegistry()
+        ..register(_fallbackRepoModule())
+        ..boot(locator);
+
+      expect(locator.get<_NeedsRepo>().repo.name, 'fallback');
+    });
+
+    test('应用已提供实现时 boot 动作不会覆盖', () {
+      final locator = ServiceLocator()
+        ..registerSingleton<_Repo>(const _Repo('app'));
+      ModuleRegistry()
+        ..register(_fallbackRepoModule())
+        ..boot(locator);
+
+      expect(locator.get<_NeedsRepo>().repo.name, 'app');
+    });
   });
 
   group('贡献聚合', () {
@@ -373,6 +415,18 @@ void main() {
     });
   });
 }
+
+/// 模拟「应用没提供就装兜底实现」的模块（`AuthModule` 的同款写法）。
+_FakeModule _fallbackRepoModule() => _FakeModule(
+  const ModuleDescriptor(id: 'fallback', version: '1'),
+  onRegister: (registrar) => registrar
+    ..onBoot((locator) {
+      if (!locator.isRegistered<_Repo>()) {
+        locator.registerLazySingleton<_Repo>(() => const _Repo('fallback'));
+      }
+    })
+    ..lazySingleton<_NeedsRepo>((locator) => _NeedsRepo(locator.get<_Repo>())),
+);
 
 /// 仅用于验证 `find<T>` 的类型不匹配分支。
 class _OtherModule implements AppModule {
